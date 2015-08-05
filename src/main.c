@@ -21,8 +21,10 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   struct tm *t = localtime(&now);
   //int32_t second_angle = (TRIG_MAX_ANGLE * t->tm_sec / 90 - (TRIG_MAX_ANGLE/3)) % TRIG_MAX_ANGLE;
   int32_t minute_angle = ((TRIG_MAX_ANGLE * t->tm_min / 90) - (TRIG_MAX_ANGLE/3)) % TRIG_MAX_ANGLE;
-  int32_t hour_angle   = ((TRIG_MAX_ANGLE * (t->tm_hour %12 + t->tm_min/60) / 12 * 250/360) - (TRIG_MAX_ANGLE/4)) % TRIG_MAX_ANGLE;
-  int32_t am_angle   = ((TRIG_MAX_ANGLE /2 * (t->tm_hour %12) / 24) - (TRIG_MAX_ANGLE/4)) % TRIG_MAX_ANGLE;
+  //APP_LOG(APP_LOG_LEVEL_DEBUG, "[DBUG] tm_min=%i", tm_min);
+  //int32_t hour_angle   = ((TRIG_MAX_ANGLE * (t->tm_hour %12 + t->tm_min/60) / 12 * 290/360) - (TRIG_MAX_ANGLE/3)) % TRIG_MAX_ANGLE;
+  int32_t hour_angle   = (TRIG_MAX_ANGLE * 280/360 * (t->tm_hour%12 + t->tm_min/60)/12 - (TRIG_MAX_ANGLE * 110/360)) % TRIG_MAX_ANGLE;
+  int32_t am_angle   = ((TRIG_MAX_ANGLE /2 * (t->tm_hour) / 24) - (TRIG_MAX_ANGLE/4)) % TRIG_MAX_ANGLE;
   int32_t fuel_angle   = ((TRIG_MAX_ANGLE * batteryLevel / 300) - (TRIG_MAX_ANGLE/3)) % TRIG_MAX_ANGLE;
   
   #ifdef PBL_COLOR
@@ -56,6 +58,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   graphics_context_set_fill_color(ctx, GColorBlack);
   graphics_fill_circle(ctx, GPoint(64,140), 1);
   graphics_fill_circle(ctx, GPoint(93,54), 1);
+  graphics_fill_circle(ctx, GPoint(29,30), 1);
 }
 
 
@@ -89,7 +92,7 @@ void handle_init(void) {
   s_am_arrow   = gpath_create(&AM_HAND_POINTS);
   
   gpath_move_to(s_minute_arrow, GPoint(64,140));
-  gpath_move_to(s_hour_arrow, GPoint(93,54));
+  gpath_move_to(s_hour_arrow, GPoint(93,52));
   gpath_move_to(s_am_arrow, GPoint(16,77));
   gpath_move_to(s_fuel_arrow, GPoint(29,30));
 
