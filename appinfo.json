@@ -1,0 +1,40 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "kristof.willen@gmail.com",
+    "longName": "Dashboard",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "images/dash-color-bg.png",
+                "name": "IMAGE_BACKGROUND_COLOR",
+                "type": "png"
+            },
+            {
+                "file": "images/dash-bg-bw.png",
+                "name": "IMAGE_DIALS",
+                "type": "png"
+            },
+            {
+                "file": "images/gauge.png",
+                "menuIcon": true,
+                "name": "IMAGE_APP_ICON",
+                "type": "png"
+            }
+        ]
+    },
+    "sdkVersion": "3",
+    "shortName": "Dashboard",
+    "targetPlatforms": [
+        "aplite",
+        "basalt"
+    ],
+    "uuid": "24c364e9-5887-4801-8e79-87b3d5b03ec1",
+    "versionLabel": "1.1",
+    "watchapp": {
+        "watchface": true
+    }
+}
