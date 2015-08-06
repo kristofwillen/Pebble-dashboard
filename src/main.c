@@ -55,9 +55,14 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   gpath_draw_outline(ctx, s_fuel_arrow);
   
   // dot in the middle
+   #ifdef PBL_COLOR
+    graphics_context_set_fill_color(ctx, GColorDarkCandyAppleRed);
+  #else 
+    graphics_context_set_fill_color(ctx, GColorWhite);
+  #endif
+  graphics_fill_circle(ctx, GPoint(64,140), 6);
+  graphics_fill_circle(ctx, GPoint(93,52), 6);
   graphics_context_set_fill_color(ctx, GColorBlack);
-  graphics_fill_circle(ctx, GPoint(64,140), 1);
-  graphics_fill_circle(ctx, GPoint(93,52), 1);
   graphics_fill_circle(ctx, GPoint(29,30), 1);
 }
 

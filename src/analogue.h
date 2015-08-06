@@ -26,7 +26,7 @@ static const GPathInfo FUEL_HAND_POINTS = {
     {-5, 0},
     {0, 5},
     {5, 0},
-    {0,-20}
+    {0,-25}
   }
 };
 
