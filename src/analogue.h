@@ -32,9 +32,9 @@ static const GPathInfo FUEL_HAND_POINTS = {
 
 static const GPathInfo AM_HAND_POINTS = {
   4, (GPoint []){
-    {-3, 0},
-    {0, 2},
-    {3, 0},
-    {0,-15}
+    {-4, 0},
+    {0, 3},
+    {4, 0},
+    {0,-18}
   }
 };
