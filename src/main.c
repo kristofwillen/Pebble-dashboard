@@ -7,6 +7,8 @@ static GBitmap *s_dials_bitmap;
 static GPath *s_minute_arrow, *s_hour_arrow, *s_fuel_arrow, *s_am_arrow;
 static Layer *s_hands_layer;
 static int batteryLevel = 100;
+static TextLayer *s_time_layer;
+static GFont s_time_font;
 
 
 static void battery_handler(BatteryChargeState new_state) {
@@ -19,13 +21,18 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   
   time_t now = time(NULL);
   struct tm *t = localtime(&now);
+  static char s_date_buffer[10];
+    
+  strftime(s_date_buffer, sizeof(s_date_buffer), "%a %d", t);
+  text_layer_set_text(s_time_layer, s_date_buffer);
+  
   //int32_t second_angle = (TRIG_MAX_ANGLE * t->tm_sec / 90 - (TRIG_MAX_ANGLE/3)) % TRIG_MAX_ANGLE;
   int32_t minute_angle = ((TRIG_MAX_ANGLE * t->tm_min / 90) - (TRIG_MAX_ANGLE/3)) % TRIG_MAX_ANGLE;
   //APP_LOG(APP_LOG_LEVEL_DEBUG, "[DBUG] tm_min=%i", tm_min);
   //int32_t hour_angle   = ((TRIG_MAX_ANGLE * (t->tm_hour %12 + t->tm_min/60) / 12 * 290/360) - (TRIG_MAX_ANGLE/3)) % TRIG_MAX_ANGLE;
   int32_t hour_angle   = (TRIG_MAX_ANGLE * 280/360 * (t->tm_hour%12 + t->tm_min/60)/12 - (TRIG_MAX_ANGLE * 110/360)) % TRIG_MAX_ANGLE;
   int32_t am_angle   = ((TRIG_MAX_ANGLE /2 * (t->tm_hour) / 24) - (TRIG_MAX_ANGLE/4)) % TRIG_MAX_ANGLE;
-  int32_t fuel_angle   = ((TRIG_MAX_ANGLE * batteryLevel / 300) - (TRIG_MAX_ANGLE/3)) % TRIG_MAX_ANGLE;
+  int32_t fuel_angle   = ((TRIG_MAX_ANGLE * batteryLevel / 100 * 135/360) - (TRIG_MAX_ANGLE*135/360)) % TRIG_MAX_ANGLE;
   
   #ifdef PBL_COLOR
     graphics_context_set_fill_color(ctx, GColorDarkCandyAppleRed);
@@ -50,6 +57,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   gpath_draw_filled(ctx, s_am_arrow);
   gpath_draw_outline(ctx, s_am_arrow);
   
+  battery_handler(battery_state_service_peek());
   gpath_rotate_to(s_fuel_arrow, fuel_angle);
   gpath_draw_filled(ctx, s_fuel_arrow);
   gpath_draw_outline(ctx, s_fuel_arrow);
@@ -60,8 +68,8 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   #else 
     graphics_context_set_fill_color(ctx, GColorWhite);
   #endif
-  graphics_fill_circle(ctx, GPoint(64,140), 6);
-  graphics_fill_circle(ctx, GPoint(93,52), 6);
+  graphics_fill_circle(ctx, GPoint(64,140), 5);
+  graphics_fill_circle(ctx, GPoint(93,52), 5);
   graphics_context_set_fill_color(ctx, GColorBlack);
   graphics_fill_circle(ctx, GPoint(29,30), 1);
 }
@@ -86,6 +94,19 @@ void handle_init(void) {
   s_dials_layer = bitmap_layer_create(GRect(0,0,144,168));
   bitmap_layer_set_bitmap(s_dials_layer, s_dials_bitmap);
   layer_add_child(window_get_root_layer(my_window), bitmap_layer_get_layer(s_dials_layer));
+  
+  s_time_layer = text_layer_create(GRect(44, 148, 36, 15));
+   #ifdef PBL_COLOR
+    text_layer_set_background_color(s_time_layer, GColorRajah);
+  #else 
+    text_layer_set_background_color(s_time_layer, GColorWhite);
+  #endif
+  text_layer_set_text_color(s_time_layer, GColorBlack);
+  text_layer_set_text(s_time_layer, "Sat 01");
+  s_time_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DS_DIGITAL_12));
+  text_layer_set_font(s_time_layer, s_time_font);
+  text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
+  layer_add_child(window_get_root_layer(my_window), text_layer_get_layer(s_time_layer));
   
   s_hands_layer = layer_create(bounds);
   layer_set_update_proc(s_hands_layer, hands_update_proc);
