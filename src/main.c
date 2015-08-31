@@ -57,8 +57,8 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   gpath_draw_filled(ctx, s_am_arrow);
   gpath_draw_outline(ctx, s_am_arrow);
   
-  // Only checks once per hour battery state
-  if (t->tm_min == 0) { battery_handler(battery_state_service_peek()); }
+  // Only checks once per 10 minutes battery state
+  if ((t->tm_min%10) == 0) { battery_handler(battery_state_service_peek()); }
   gpath_rotate_to(s_fuel_arrow, fuel_angle);
   gpath_draw_filled(ctx, s_fuel_arrow);
   gpath_draw_outline(ctx, s_fuel_arrow);
