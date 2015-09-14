@@ -1,13 +1,20 @@
 {
-    "appKeys": {},
+    "appKeys": {
+        "KEY_INVERT": 0
+    },
     "capabilities": [
-        ""
+        "configurable"
     ],
     "companyName": "kristof.willen@gmail.com",
     "longName": "Dashboard",
     "projectType": "native",
     "resources": {
         "media": [
+            {
+                "file": "images/dash-bg-white.png",
+                "name": "IMAGE_DIALS_INVERTED",
+                "type": "png"
+            },
             {
                 "file": "fonts/ds-digital.ttf",
                 "name": "FONT_DS_DIGITAL_12",
@@ -38,7 +45,7 @@
         "basalt"
     ],
     "uuid": "24c364e9-5887-4801-8e79-87b3d5b03ec1",
-    "versionLabel": "1.21",
+    "versionLabel": "2.0",
     "watchapp": {
         "watchface": true
     }

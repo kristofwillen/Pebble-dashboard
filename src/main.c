@@ -1,18 +1,23 @@
 #include <pebble.h>
 #include "analogue.h"
+#define KEY_INVERT 0 
 
 Window *my_window;
 static BitmapLayer *s_dials_layer;
 static GBitmap *s_dials_bitmap;
 static GPath *s_minute_arrow, *s_hour_arrow, *s_fuel_arrow, *s_am_arrow;
 static Layer *s_hands_layer;
+#ifdef PBL_COLOR
+#else  
+  static InverterLayer *s_inv_layer;
+#endif
 static int batteryLevel = 100;
 static TextLayer *s_time_layer;
 static GFont s_time_font;
+static bool inverted = false;
 
 
 static void battery_handler(BatteryChargeState new_state) {
-  
   batteryLevel = (int)new_state.charge_percent;
 }
 
@@ -27,9 +32,8 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   text_layer_set_text(s_time_layer, s_date_buffer);
   
   //int32_t second_angle = (TRIG_MAX_ANGLE * t->tm_sec / 90 - (TRIG_MAX_ANGLE/3)) % TRIG_MAX_ANGLE;
+  //int32_t minute_angle = ((TRIG_MAX_ANGLE * 0 / 90) - (TRIG_MAX_ANGLE/3)) % TRIG_MAX_ANGLE;
   int32_t minute_angle = ((TRIG_MAX_ANGLE * t->tm_min / 90) - (TRIG_MAX_ANGLE/3)) % TRIG_MAX_ANGLE;
-  //APP_LOG(APP_LOG_LEVEL_DEBUG, "[DBUG] tm_min=%i", tm_min);
-  //int32_t hour_angle   = ((TRIG_MAX_ANGLE * (t->tm_hour %12 + t->tm_min/60) / 12 * 290/360) - (TRIG_MAX_ANGLE/3)) % TRIG_MAX_ANGLE;
   int32_t hour_angle   = (TRIG_MAX_ANGLE * 280/360 * (t->tm_hour%12 + t->tm_min/60)/12 - (TRIG_MAX_ANGLE * 110/360)) % TRIG_MAX_ANGLE;
   int32_t am_angle   = ((TRIG_MAX_ANGLE /2 * (t->tm_hour) / 24) - (TRIG_MAX_ANGLE/4)) % TRIG_MAX_ANGLE;
   int32_t fuel_angle   = ((TRIG_MAX_ANGLE * batteryLevel / 100 * 135/360) - (TRIG_MAX_ANGLE*135/360)) % TRIG_MAX_ANGLE;
@@ -41,7 +45,6 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   #endif
   graphics_context_set_stroke_color(ctx, GColorBlack);
 
-  //gpath_rotate_to(s_hour_arrow, (225 * ((((t->tm_hour % 12) * 6) + (t->tm_min / 10))-90) / (12 * 6)));
   gpath_rotate_to(s_hour_arrow, hour_angle);
   gpath_draw_filled(ctx, s_hour_arrow);
   gpath_draw_outline(ctx, s_hour_arrow);
@@ -76,13 +79,61 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 }
 
 
+static void in_recv_handler(DictionaryIterator *iterator, void *context) {
+  //Get data
+  Tuple *t = dict_read_first(iterator);
+  
+  while (t) {
+   APP_LOG(APP_LOG_LEVEL_DEBUG, "[DBUG] Found dict key=%i", (int)t->key);
+   switch(t->key) {
+    case KEY_INVERT:
+      
+      if (strcmp(t->value->cstring, "0") == 0) { 
+        inverted = false; 
+        #ifdef PBL_COLOR
+        #else  
+          layer_set_hidden((Layer *)s_inv_layer,true);
+        #endif
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "[DBUG]  inverted = 0");
+      }
+      else { 
+        inverted = true; 
+        #ifdef PBL_COLOR
+        #else  
+          layer_set_hidden((Layer *)s_inv_layer,false);
+        #endif
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "[DBUG] inverted = 1"); 
+      }
+      break;
+   }
+    
+   t = dict_read_next(iterator);
+    
+  }
+}
+
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   layer_mark_dirty(window_get_root_layer(my_window));
 }
 
 
+static void inbox_dropped(AppMessageResult reason, void *context) {
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "[DBUG] inbox_dropped %d", reason);
+}
+
+  
+
 void handle_init(void) {
+  
+  app_message_register_inbox_received(in_recv_handler);
+  app_message_register_inbox_dropped(inbox_dropped);
+  app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+  
+  // Load user config
+  if (persist_exists(KEY_INVERT)) { inverted = persist_read_bool(KEY_INVERT); }
+  
+  
   my_window = window_create();
   Layer *window_layer = window_get_root_layer(my_window);
   GRect bounds = layer_get_bounds(window_layer);
@@ -122,7 +173,16 @@ void handle_init(void) {
   gpath_move_to(s_hour_arrow, GPoint(93,52));
   gpath_move_to(s_am_arrow, GPoint(16,77));
   gpath_move_to(s_fuel_arrow, GPoint(29,30));
-
+  
+  #ifdef PBL_COLOR
+  #else  
+    s_inv_layer = inverter_layer_create(GRect(0,0,144,168));
+    layer_add_child(window_get_root_layer(my_window), inverter_layer_get_layer(s_inv_layer));
+  
+    if (inverted) { layer_set_hidden((Layer *)s_inv_layer,false); }
+    else { layer_set_hidden((Layer *)s_inv_layer,true); }
+  #endif
+    
   window_stack_push(my_window, true);
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
   
@@ -133,8 +193,21 @@ void handle_init(void) {
 
 
 void handle_deinit(void) {
+  // Writing persistent storage
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "[DBUG] Writing persistent data...");
+  persist_write_bool(KEY_INVERT, inverted);
+  
+  gpath_destroy(s_minute_arrow);
+  gpath_destroy(s_hour_arrow);
+  gpath_destroy(s_fuel_arrow);
+  gpath_destroy(s_am_arrow);
+  
   bitmap_layer_destroy(s_dials_layer);
   layer_destroy(s_hands_layer);
+  #ifdef PBL_COLOR
+  #else
+    inverter_layer_destroy(s_inv_layer);
+  #endif
   window_destroy(my_window);
   tick_timer_service_unsubscribe();
 }
