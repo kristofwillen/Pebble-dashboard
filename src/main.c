@@ -191,7 +191,7 @@ void handle_init(void) {
   #endif
     
   window_stack_push(my_window, true);
-  tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
+  tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
   
   // Get the current battery level
   battery_handler(battery_state_service_peek());
