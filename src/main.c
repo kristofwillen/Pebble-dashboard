@@ -12,7 +12,7 @@ static Layer *s_hands_layer;
   static InverterLayer *s_inv_layer;
 #endif
 static int batteryLevel = 100;
-static TextLayer *s_time_layer;
+static TextLayer *s_time_layer, *s_bg_layer;
 static GFont s_time_font;
 static bool inverted = false;
 
@@ -33,13 +33,15 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   
   //int32_t second_angle = (TRIG_MAX_ANGLE * t->tm_sec / 90 - (TRIG_MAX_ANGLE/3)) % TRIG_MAX_ANGLE;
   //int32_t minute_angle = ((TRIG_MAX_ANGLE * 0 / 90) - (TRIG_MAX_ANGLE/3)) % TRIG_MAX_ANGLE;
+  // int32_t hour_angle  = TRIG_MAX_ANGLE * (t->tm_sec%12)/16 - (TRIG_MAX_ANGLE*115/360);
+  //int32_t hour_angle   = (TRIG_MAX_ANGLE * 280/360 * (t->tm_hour%12 + t->tm_min/60)/12 - (TRIG_MAX_ANGLE * 110/360)) % TRIG_MAX_ANGLE;
   int32_t minute_angle = ((TRIG_MAX_ANGLE * t->tm_min / 90) - (TRIG_MAX_ANGLE/3)) % TRIG_MAX_ANGLE;
-  int32_t hour_angle   = (TRIG_MAX_ANGLE * 280/360 * (t->tm_hour%12 + t->tm_min/60)/12 - (TRIG_MAX_ANGLE * 110/360)) % TRIG_MAX_ANGLE;
-  int32_t am_angle   = ((TRIG_MAX_ANGLE /2 * (t->tm_hour) / 24) - (TRIG_MAX_ANGLE/4)) % TRIG_MAX_ANGLE;
+  int32_t hour_angle   = ((TRIG_MAX_ANGLE * (((t->tm_hour % 12) * 6) + (t->tm_min / 10))) / 96) - (TRIG_MAX_ANGLE/360*115);
+  int32_t am_angle     = ((TRIG_MAX_ANGLE /2 * (t->tm_hour) / 24) - (TRIG_MAX_ANGLE/4)) % TRIG_MAX_ANGLE;
   int32_t fuel_angle   = ((TRIG_MAX_ANGLE * batteryLevel / 100 * 135/360) - (TRIG_MAX_ANGLE*135/360)) % TRIG_MAX_ANGLE;
   
   #ifdef PBL_COLOR
-    graphics_context_set_fill_color(ctx, GColorDarkCandyAppleRed);
+    graphics_context_set_fill_color(ctx, GColorRed);
   #else 
     graphics_context_set_fill_color(ctx, GColorWhite);
   #endif
@@ -67,13 +69,9 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   gpath_draw_outline(ctx, s_fuel_arrow);
   
   // dot in the middle
-   #ifdef PBL_COLOR
-    graphics_context_set_fill_color(ctx, GColorDarkCandyAppleRed);
-  #else 
-    graphics_context_set_fill_color(ctx, GColorWhite);
-  #endif
-  graphics_fill_circle(ctx, GPoint(64,140), 5);
-  graphics_fill_circle(ctx, GPoint(93,52), 5);
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_fill_circle(ctx, GPoint(64,140), 1);
+  graphics_fill_circle(ctx, GPoint(93,52), 1);
   graphics_context_set_fill_color(ctx, GColorBlack);
   graphics_fill_circle(ctx, GPoint(29,30), 1);
 }
@@ -138,13 +136,22 @@ void handle_init(void) {
   Layer *window_layer = window_get_root_layer(my_window);
   GRect bounds = layer_get_bounds(window_layer);
 
+  s_bg_layer = text_layer_create(GRect(0,0,144,168));
   #ifdef PBL_COLOR
-    s_dials_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BACKGROUND_COLOR);
+    text_layer_set_background_color(s_bg_layer,GColorBlack);
+    layer_add_child(window_get_root_layer(my_window), text_layer_get_layer(s_bg_layer));
+  #endif
+    
+  #ifdef PBL_COLOR
+    s_dials_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BACKGROUND_TRANSPARANT);
   #else
     s_dials_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DIALS);
   #endif
   s_dials_layer = bitmap_layer_create(GRect(0,0,144,168));
   bitmap_layer_set_bitmap(s_dials_layer, s_dials_bitmap);
+  #ifdef PBL_COLOR
+    bitmap_layer_set_compositing_mode(s_dials_layer,GCompOpSet);
+  #endif
   layer_add_child(window_get_root_layer(my_window), bitmap_layer_get_layer(s_dials_layer));
   
   s_time_layer = text_layer_create(GRect(44, 148, 36, 15));
@@ -184,7 +191,7 @@ void handle_init(void) {
   #endif
     
   window_stack_push(my_window, true);
-  tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+  tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
   
   // Get the current battery level
   battery_handler(battery_state_service_peek());
@@ -208,6 +215,7 @@ void handle_deinit(void) {
   #else
     inverter_layer_destroy(s_inv_layer);
   #endif
+  text_layer_destroy(s_bg_layer);  
   window_destroy(my_window);
   tick_timer_service_unsubscribe();
 }

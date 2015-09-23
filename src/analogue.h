@@ -5,18 +5,18 @@
 static const GPathInfo MINUTE_HAND_POINTS = {
   4,
   (GPoint []) {
-    {-5, 0 },
+    {-6, 0 },
     { 0, 10 },
-    { 5, 0 },
+    { 6, 0 },
     {0,-50}  
   }
 };
 
 static const GPathInfo HOUR_HAND_POINTS = {
   4, (GPoint []){
-    {-5, 0},
+    {-6, 0},
     {0, 10},
-    {5, 0},
+    {6, 0},
     {0,-40}
   }
 };

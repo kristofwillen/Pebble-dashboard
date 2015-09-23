@@ -11,6 +11,11 @@
     "resources": {
         "media": [
             {
+                "file": "images/dash-bgcoltransp.png",
+                "name": "IMAGE_BACKGROUND_TRANSPARANT",
+                "type": "png"
+            },
+            {
                 "file": "images/dash-bg-white.png",
                 "name": "IMAGE_DIALS_INVERTED",
                 "type": "png"
@@ -45,7 +50,7 @@
         "basalt"
     ],
     "uuid": "24c364e9-5887-4801-8e79-87b3d5b03ec1",
-    "versionLabel": "2.0",
+    "versionLabel": "2.10",
     "watchapp": {
         "watchface": true
     }
