@@ -12,7 +12,7 @@ jobs:
     - uses: actions/checkout@v1
     - name: Build and test with Rebble
       run: |
-        docker run --rm -i \
+        sudo docker run --rm -i \
            -v /home/runner/work/Pebble-dashboard/Pebble-dashboard:/work \
            -v /tmp/.X11-unix:/tmp/.X11-unix \
            -e DISPLAY=$DISPLAY \
